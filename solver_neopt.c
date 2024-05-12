@@ -16,7 +16,7 @@ double* my_solver(int N, double *A, double *B) {
     double *AtxB = calloc(N * N, sizeof(double));
     double *BxA = calloc(N * N, sizeof(double));
 
-    // Calculate AtxB = A^T * B
+    // Calculate At x B
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             double sum = 0.0;
@@ -27,7 +27,7 @@ double* my_solver(int N, double *A, double *B) {
         }
     }
 
-    // Calculate BxA = B * A
+    // Calculate B x A
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             double sum = 0.0;
@@ -38,7 +38,7 @@ double* my_solver(int N, double *A, double *B) {
         }
     }
 
-    // Calculate C = (AtxB + BxA) * Bt (final multiplication using B as B^T correctly)
+    // Calculate C = (AtxB + BxA) x Bt (final multiplication using B as B^T correctly)
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             for (int k = 0; k < N; k++) {

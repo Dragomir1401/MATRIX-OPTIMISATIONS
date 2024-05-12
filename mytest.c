@@ -54,10 +54,11 @@ double* my_solver(int N, double *A, double *B) {
 	double *pb_origin = &B[0];
 	double *pa_origin = &At[0];
 
+    // Calculate AtxB = A^T * B
     for (register int i = 0; i < N; i++) {
 		register double *pa = pa_origin + i * N;
 		register double *pb = pb_origin;
-		for (register int k = 0; k < N; k++) {
+		for (register int k = 0; k <= i; k++) { // A^T is lower triangular
 			register double *pab = pab_origin; // AB[i][j]
 			register double *pb_k = pb;		   // &B[k * N]
 			register double aik = *pa;
@@ -86,18 +87,18 @@ double* my_solver(int N, double *A, double *B) {
 	pb_origin = &A[0];
 	pa_origin = &B[0];
 
-    // Calculate BxA = B * A
+    // Calculate B x A = B * A
     for (register int i = 0; i < N; i++) {
 		register double *pa = pa_origin + i * N;
 		register double *pb = pb_origin;
 		for (register int k = 0; k < N; k++) {
 			register double *pab = pab_origin; // AB[i][j]
-			register double *pb_k = pb;		   // &B[k * N]
+			register double *pb_k = pb;		   // &A[k * N]
 			register double aik = *pa;
 			for (register int j = 0; j < N; j++) {
-				*pab += aik * *pb_k; // AB[i][j] = A[i][k] + B[k][j]
+				*pab += aik * *pb_k; // AB[i][j] = B[i][k] + A[k][j]
 				pab++;				 // AB[i][j++]
-				pb_k++;				 // B[k][j++]
+				pb_k++;				 // A[k][j++]
 			}
 			pa++;	 // A[i][k++]
 			pb += N; // B[k++][j]
