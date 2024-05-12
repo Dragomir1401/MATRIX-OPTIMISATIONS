@@ -1,22 +1,37 @@
-/*
- * Tema 2 ASC
- * 2024 Spring
- */
 #include "utils.h"
-
-// C = (At × B + B × A) × Bt
+#include <stdlib.h>
+#include <stdio.h>
 
 /*
  * Add your optimized implementation here
  */
-void transpose(double *src, double *dst, int N) {
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-            dst[j * N + i] = src[i * N + j];
+void transpose_matrices(double *A, double *B, double *transA, double *transB, int N) {
+    // Transpose A taking into account its upper triangular structure
+    for (register int i = 0; i < N; i++) {
+        double *ptr_A = &A[i * N];  // Pointer to the start of the current row of A
+        double *ptr_transpose_A = &transA[i];  // Starting at the i-th position in transA
+        
+        for (register int j = 0; j <= i; j++) {
+            *ptr_transpose_A = *ptr_A;  // Assign the element
+            ptr_transpose_A += N;  // Move to the next row, same column in transA
+            ptr_A++;  // Move to the next column in the current row of A
+        }
+    }
+
+    // Transpose B normally
+    for (register int i = 0; i < N; i++) {
+        double *ptr_B = &B[i * N];  // Pointer to the start of the current row of B
+        double *ptr_transpose_B = &transB[i];  // Starting at the i-th position in transB
+        
+        for (register int j = 0; j < N; j++) {
+            *ptr_transpose_B = *ptr_B;  // Assign the element
+            ptr_transpose_B += N;  // Move to the next row, same column in transB
+            ptr_B++;  // Move to the next column in the current row of B
         }
     }
 }
 
+// Main solver function
 double *my_solver(int N, double *A, double *B) {
     printf("OPT SOLVER\n");
 
@@ -27,41 +42,46 @@ double *my_solver(int N, double *A, double *B) {
     double *AtxB_plus_BxA = calloc(N * N, sizeof(double));
     double *C = calloc(N * N, sizeof(double));
 
-    // Transpose A and B
-    transpose(A, At, N);
-    transpose(B, Bt, N);
+   	// Transpose A and B
+    transpose_matrices(A, B, At, Bt, N);
 
-    // Compute AtxB = A^T * B
-    for (int i = 0; i < N; i++) {
-        for (int k = 0; k < N; k++) {
+    // Compute AtxB = A^T * B using more register hints
+    for (register int i = 0; i < N; i++) {
+        for (register int k = 0; k < N; k++) {
             register double aik = At[i * N + k];
-            for (int j = 0; j < N; j++) {
-                AtxB[i * N + j] += aik * B[k * N + j];
+            register double *AtxB_row = &AtxB[i * N];
+            register double *B_row = &B[k * N];
+            for (register int j = 0; j < N; j++) {
+                AtxB_row[j] += aik * B_row[j];
             }
         }
     }
 
-    // Compute BxA = B * A
-    for (int i = 0; i < N; i++) {
-        for (int k = 0; k < N; k++) {
+    // Compute BxA = B * A, leveraging A's upper triangular structure
+    for (register int i = 0; i < N; i++) {
+        for (register int k = 0; k < N; k++) {
             register double bik = B[i * N + k];
-            for (int j = k; j < N; j++) {  // Only compute upper triangular part of A
-                BxA[i * N + j] += bik * A[k * N + j];
+            register double *BxA_row = &BxA[i * N];
+            register double *A_row = &A[k * N];
+            for (register int j = k; j < N; j++) {
+                BxA_row[j] += bik * A_row[j];
             }
         }
     }
 
     // Sum AtxB and BxA
-    for (int i = 0; i < N * N; i++) {
+    for (register int i = 0; i < N * N; i++) {
         AtxB_plus_BxA[i] = AtxB[i] + BxA[i];
     }
 
     // Compute C = (AtxB + BxA) * B^T
-    for (int i = 0; i < N; i++) {
-        for (int k = 0; k < N; k++) {
+    for (register int i = 0; i < N; i++) {
+        register double *C_row = &C[i * N];
+        for (register int k = 0; k < N; k++) {
             register double tmp = AtxB_plus_BxA[i * N + k];
-            for (int j = 0; j < N; j++) {
-                C[i * N + j] += tmp * Bt[k * N + j];
+            register double *Bt_row = &Bt[k * N];
+            for (register int j = 0; j < N; j++) {
+                C_row[j] += tmp * Bt_row[j];
             }
         }
     }
