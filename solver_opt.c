@@ -40,71 +40,74 @@ void transpose_matrices(double *A, double *B, double *transA, double *transB,
 	}
 }
 
-double *my_solver(int N, double *A, double *B) {
+double* my_solver(int N, double *A, double *B) {
     printf("OPT SOLVER\n");
-
-    double *At = calloc(N * N, sizeof(double));
-    double *Bt = calloc(N * N, sizeof(double));
+    
+    double *C = calloc(N * N, sizeof(double));
     double *AtxB = calloc(N * N, sizeof(double));
     double *BxA = calloc(N * N, sizeof(double));
-    double *AtxB_plus_BxA = calloc(N * N, sizeof(double));
-    double *C = calloc(N * N, sizeof(double));
 
-    // Transpose A and B
-    transpose_matrices(A, B, At, Bt, N);
+	double *pab_origin = &AtxB[0];
+	double *pb_origin = &B[0];
+	double *pa_origin = &A[0];
 
-    // Compute AtxB = At * B
+    // Calculate AtxB = A^T * B
+	for (register int i = 0; i < N; i++) {
+		register double *pb_k = pb_origin; // &B[i * N]
+		register double *pa_k =
+			pa_origin + i; // Sup triangular matrix, start from i
+		for (register int k = i; k < N; k++) {
+			register double *pab_j = pab_origin; // A[i][0]
+			register double *pb_j = pb_k;		 // B[k][0]
+			register double aik = *pa_k;		 // A[i * N + k];
+			for (register int j = 0; j < N; j++) {
+				*pab_j += aik * *pb_j;
+				pab_j++; // AB[i][j++];
+				pb_j++;	 // B[k][j++]
+			}
+			pb_k += N; // B[k++][j]
+			pa_k++;
+		}
+		pab_origin += N; // AB[i++][j]
+		pa_origin += N;	 // A[i++][k]
+		pb_origin += N;	 // reset origin to next line
+	}
+
+
+    // Calculate BxA = B * A
     for (register int i = 0; i < N; i++) {
-        double register *At_row = At + i * N;
-        double register *AtxB_row = AtxB + i * N;
-        for (register int j = 0; j < N; j++) {
-            double register sum = 0.0;
-            double register *B_col = B + j;
-            for (register int k = 0; k < N; k++) {
-                sum += At_row[k] * B_col[k * N];
-            }
-            AtxB_row[j] = sum;
-        }
-    }
+        register double sum = 0.0;
+		register double *ptr_A = A;
+		register double *ptr_B = B + i;
+		for (register int j = 0; j < N; j++) {
+			register double *ptr_A_k = ptr_A;
+			register double *ptr_B_k = ptr_B;
+			for (register int k = 0; k <= j; k++) {
+				sum += *ptr_B_k * *ptr_A_k;
+				ptr_A_k++;
+				ptr_B_k++;
+			}
+			BxA[i * N + j] = sum;
+			sum = 0.0;
+			ptr_A += N;
+		}
+	}
 
-    // Compute BxA = B * A
+    // Calculate C = (AtxB + BxA) * Bt (final multiplication using B as B^T correctly)
     for (register int i = 0; i < N; i++) {
-        register double *B_row = B + i * N;
-        register double *BxA_row = BxA + i * N;
-        for (register int j = 0; j < N; j++) {
-            register double sum = 0.0;
-            register double *A_col = A + j;
-            for (register int k = 0; k < N; k++) {
-                sum += B_row[k] * A_col[k * N];
-            }
-            BxA_row[j] = sum;
-        }
-    }
+        register double *ptr_B = B;
+		for (register int j = 0; j < N; j++) {
+			register double sum = 0.0;
+			for (register int k = 0; k < N; k++) {
+				sum += (AtxB[i * N + k] + BxA[i * N + k]) * *ptr_B;
+				ptr_B++;
+			}
+			C[i * N + j] = sum;
+		}
+	}
 
-    // Compute AtxB_plus_BxA = AtxB + BxA
-    for (int i = 0; i < N * N; i++) {
-        AtxB_plus_BxA[i] = AtxB[i] + BxA[i];
-    }
-
-    // Compute C = (AtxB_plus_BxA) * Bt
-    for (register int i = 0; i < N; i++) {
-        register double *AtxB_plus_BxA_row = AtxB_plus_BxA + i * N;
-        register double *C_row = C + i * N;
-        for (register int j = 0; j < N; j++) {
-            register double sum = 0.0;
-            register double *Bt_col = Bt + j;
-            for (register int k = 0; k < N; k++) {
-                sum += AtxB_plus_BxA_row[k] * Bt_col[k * N];
-            }
-            C_row[j] = sum;
-        }
-    }
-
-    free(At);
-    free(Bt);
     free(AtxB);
     free(BxA);
-    free(AtxB_plus_BxA);
 
     return C;
 }
