@@ -1,49 +1,43 @@
 #include "utils.h"
-#include <stdlib.h>
-#include <stdio.h>
 
 // C = (At × B + B × A) × Bt
-
-/*
- * Add your optimized implementation here
- */
-// Helper function to transpose matrices
 void transpose_matrices(double *A, double *B, double *transA, double *transB,
 					  int N) {
-	double *ptr_orig_transpose_A = transA;
-	double *ptr_orig_transpose_B = transB;
+	double *At_origin = transA;
+	double *Bt_origin = transB;
 
-	double *ptr_A = A;
-	double *ptr_B = B;
+	double *A_iterator = A;
+	double *B_iterator = B;
 	register int i = 0;
-	register int count;
+	register int counter = 0;
 
 	while (i < N) {
-		double *ptr_transpose_A = ptr_orig_transpose_A;
-		double *ptr_transpose_B = ptr_orig_transpose_B;
+		double *At_iterator = At_origin;
+		double *Bt_iterator = Bt_origin;
 
-		count = 0;
-		while (count < N) {
-			*ptr_transpose_A = *ptr_A;
-			ptr_transpose_A += N;
-			ptr_A++;
+		counter = 0;
+		while (counter < N) {
+			*At_iterator = *A_iterator;
+			At_iterator += N;
+			A_iterator++;
 
-			*ptr_transpose_B = *ptr_B;
-			ptr_transpose_B += N;
-			ptr_B++;
+			*Bt_iterator = *B_iterator;
+			Bt_iterator += N;
+			B_iterator++;
 
-			count++;
+			counter++;
 		}
+
 		i++;
-		ptr_orig_transpose_A++;
-		ptr_orig_transpose_B++;
+		At_origin++;
+		Bt_origin++;
 	}
 }
 
 double* fast_multiply(double *A, double *B, double* C, int N,
 					int start_i, int stop_i, 
 					int start_j, int stop_j,
-					int start_k, int stop_k) {
+					int start_k, int stop_k, int triangular[4]) {
 	double *pab_origin = &C[0];
 	double *pb_origin = &B[0];
 	double *pa_origin = &A[0];
@@ -52,6 +46,14 @@ double* fast_multiply(double *A, double *B, double* C, int N,
     for (register int i = start_i; i < stop_i; i++) {
 		register double *pa = pa_origin + i * N;
 		register double *pb = pb_origin;
+
+		if (triangular[0] == 2) { // If A is upper triangular
+			pa += i;
+		}
+
+		if (triangular[0] == 1) { // If A is lower triangular
+			stop_k = i + 1;
+		}
 
 		for (register int k = start_k; k < stop_k; k++) {
 			register double *pab = pab_origin; // AB[i][j]
@@ -72,9 +74,6 @@ double* fast_multiply(double *A, double *B, double* C, int N,
 	return C;
 }
 
-/*
- * Add your unoptimized implementation here
- */
 double* my_solver(int N, double *A, double *B) {
     printf("OPT SOLVER\n");
     
@@ -86,16 +85,24 @@ double* my_solver(int N, double *A, double *B) {
     double *AtxB_plus_BxA = calloc(N * N, sizeof(double));
     transpose_matrices(A, B, At, Bt, N);
 
-	AtxB = fast_multiply(At, B, AtxB, N, 0, N, 0, N, 0, N);
+	int triangular[2];
+	triangular[0] = 1;
+	triangular[1] = 0;
+	AtxB = fast_multiply(At, B, AtxB, N, 0, N, 0, N, 0, N, triangular);
 
-	BxA = fast_multiply(B, A, BxA, N, 0, N, 0, N, 0, N);
+
+	triangular[0] = 0;
+	triangular[1] = 0;
+	BxA = fast_multiply(B, A, BxA, N, 0, N, 0, N, 0, N, triangular);
 
     // Calculate AtxB + BxA
     for (int i = 0; i < N * N; i++) {
         AtxB_plus_BxA[i] = AtxB[i] + BxA[i];
     }
 
-	C = fast_multiply(AtxB_plus_BxA, Bt, C, N, 0, N, 0, N, 0, N);
+	triangular[0] = 0;
+	triangular[1] = 0;
+	C = fast_multiply(AtxB_plus_BxA, Bt, C, N, 0, N, 0, N, 0, N, triangular);
 
     free(AtxB);
     free(BxA);
