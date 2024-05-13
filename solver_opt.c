@@ -40,74 +40,68 @@ void transpose_matrices(double *A, double *B, double *transA, double *transB,
 	}
 }
 
+double* fast_multiply(double *A, double *B, double* C, int N,
+					int start_i, int stop_i, 
+					int start_j, int stop_j,
+					int start_k, int stop_k) {
+	double *pab_origin = &C[0];
+	double *pb_origin = &B[0];
+	double *pa_origin = &A[0];
+
+    // Calculate C = A * B
+    for (register int i = start_i; i < stop_i; i++) {
+		register double *pa = pa_origin + i * N;
+		register double *pb = pb_origin;
+
+		for (register int k = start_k; k < stop_k; k++) {
+			register double *pab = pab_origin; // AB[i][j]
+			register double *pb_k = pb;		   // &B[k * N]
+			register double aik = *pa;
+
+			for (register int j = start_j; j < stop_j; j++) {
+				*pab += aik * *pb_k; // AB[i][j] = A[i][k] + B[k][j]
+				pab++;				 // AB[i][j++]
+				pb_k++;				 // B[k][j++]
+			}
+			pa++;	 // A[i][k++]
+			pb += N; // B[k++][j]
+		}
+		pab_origin += N;
+	}
+
+	return C;
+}
+
+/*
+ * Add your unoptimized implementation here
+ */
 double* my_solver(int N, double *A, double *B) {
     printf("OPT SOLVER\n");
     
     double *C = calloc(N * N, sizeof(double));
     double *AtxB = calloc(N * N, sizeof(double));
     double *BxA = calloc(N * N, sizeof(double));
+    double *At = calloc(N * N, sizeof(double));
+    double *Bt = calloc(N * N, sizeof(double));
+    double *AtxB_plus_BxA = calloc(N * N, sizeof(double));
+    transpose_matrices(A, B, At, Bt, N);
 
-	double *pab_origin = &AtxB[0];
-	double *pb_origin = &B[0];
-	double *pa_origin = &A[0];
+	AtxB = fast_multiply(At, B, AtxB, N, 0, N, 0, N, 0, N);
 
-    // Calculate AtxB = A^T * B
-	for (register int i = 0; i < N; i++) {
-		register double *pb_k = pb_origin; // &B[i * N]
-		register double *pa_k =
-			pa_origin + i; // Sup triangular matrix, start from i
-		for (register int k = i; k < N; k++) {
-			register double *pab_j = pab_origin; // A[i][0]
-			register double *pb_j = pb_k;		 // B[k][0]
-			register double aik = *pa_k;		 // A[i * N + k];
-			for (register int j = 0; j < N; j++) {
-				*pab_j += aik * *pb_j;
-				pab_j++; // AB[i][j++];
-				pb_j++;	 // B[k][j++]
-			}
-			pb_k += N; // B[k++][j]
-			pa_k++;
-		}
-		pab_origin += N; // AB[i++][j]
-		pa_origin += N;	 // A[i++][k]
-		pb_origin += N;	 // reset origin to next line
-	}
+	BxA = fast_multiply(B, A, BxA, N, 0, N, 0, N, 0, N);
 
+    // Calculate AtxB + BxA
+    for (int i = 0; i < N * N; i++) {
+        AtxB_plus_BxA[i] = AtxB[i] + BxA[i];
+    }
 
-    // Calculate BxA = B * A
-    for (register int i = 0; i < N; i++) {
-        register double sum = 0.0;
-		register double *ptr_A = A;
-		register double *ptr_B = B + i;
-		for (register int j = 0; j < N; j++) {
-			register double *ptr_A_k = ptr_A;
-			register double *ptr_B_k = ptr_B;
-			for (register int k = 0; k <= j; k++) {
-				sum += *ptr_B_k * *ptr_A_k;
-				ptr_A_k++;
-				ptr_B_k++;
-			}
-			BxA[i * N + j] = sum;
-			sum = 0.0;
-			ptr_A += N;
-		}
-	}
-
-    // Calculate C = (AtxB + BxA) * Bt (final multiplication using B as B^T correctly)
-    for (register int i = 0; i < N; i++) {
-        register double *ptr_B = B;
-		for (register int j = 0; j < N; j++) {
-			register double sum = 0.0;
-			for (register int k = 0; k < N; k++) {
-				sum += (AtxB[i * N + k] + BxA[i * N + k]) * *ptr_B;
-				ptr_B++;
-			}
-			C[i * N + j] = sum;
-		}
-	}
+	C = fast_multiply(AtxB_plus_BxA, Bt, C, N, 0, N, 0, N, 0, N);
 
     free(AtxB);
     free(BxA);
+	free(At);
+	free(Bt);
+	free(AtxB_plus_BxA);
 
     return C;
 }
