@@ -1,0 +1,14 @@
+==695705== Memcheck, a memory error detector
+==695705== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==695705== Using Valgrind-3.17.0 and LibVEX; rerun with -h for copyright info
+==695705== Command: ./tema3_opt_m ../input/input_valgrind
+==695705== 
+==695705== 
+==695705== HEAP SUMMARY:
+==695705==     in use at exit: 0 bytes in 0 blocks
+==695705==   total heap usage: 12 allocs, 12 frees, 10,249,812 bytes allocated
+==695705== 
+==695705== All heap blocks were freed -- no leaks are possible
+==695705== 
+==695705== For lists of detected and suppressed errors, rerun with: -s
+==695705== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
