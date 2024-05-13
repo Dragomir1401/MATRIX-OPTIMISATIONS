@@ -1,19 +1,18 @@
 #include "utils.h"
 
 // C = (At × B + B × A) × Bt
-void transpose_matrices(double *A, double *B, double *transA, double *transB,
-					  int N) {
+void transpose_matrices(double *A, double *B, double *transA, double *transB, int N) {
+	register int i = 0, counter = 0;
 	double *At_origin = transA;
-	double *Bt_origin = transB;
-
 	double *A_iterator = A;
+	double *Bt_origin = transB;
 	double *B_iterator = B;
-	register int i = 0;
-	register int counter = 0;
 
 	while (i < N) {
 		double *At_iterator = At_origin;
 		double *Bt_iterator = Bt_origin;
+		At_origin++;
+		Bt_origin++;
 
 		counter = 0;
 		while (counter < N) {
@@ -29,8 +28,6 @@ void transpose_matrices(double *A, double *B, double *transA, double *transB,
 		}
 
 		i++;
-		At_origin++;
-		Bt_origin++;
 	}
 }
 
@@ -59,6 +56,14 @@ double* fast_multiply(double *A, double *B, double* C, int N,
 			register double *pab = pab_origin; // AB[i][j]
 			register double *pb_k = pb;		   // &B[k * N]
 			register double aik = *pa;
+
+			if (triangular[1] == 2) { // If B is upper triangular
+				pb_k += k;
+			}
+
+			if (triangular[1] == 1) { // If B is lower triangular
+				stop_j = k + 1;
+			}
 
 			for (register int j = start_j; j < stop_j; j++) {
 				*pab += aik * *pb_k; // AB[i][j] = A[i][k] + B[k][j]
