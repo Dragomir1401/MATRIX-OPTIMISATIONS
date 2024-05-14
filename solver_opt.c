@@ -1,7 +1,7 @@
 #include "utils.h"
 
 // C = (At × B + B × A) × Bt
-void transpose_matrices(double *A, double *B, double *transA, double *transB, int N)
+void transpose_matrices(double *A, double *transA, double *B, double *transB, int N)
 {
 	// Declare counters as registers
 	register int i = 0, counter = 0;
@@ -132,7 +132,7 @@ double *my_solver(int N, double *A, double *B)
 	double *AtxB_plus_BxA = calloc(N * N, sizeof(double));
 
 	// Transpose A and B
-	transpose_matrices(A, B, At, Bt, N);
+	transpose_matrices(A, At, B, Bt, N);
 
 	// Calculate At x B where At is lower triangular
 	int triangular[2];

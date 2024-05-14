@@ -1,14 +1,14 @@
-==691952== Memcheck, a memory error detector
-==691952== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==691952== Using Valgrind-3.17.0 and LibVEX; rerun with -h for copyright info
-==691952== Command: ./tema3_neopt ../input/input_valgrind
-==691952== 
-==691952== 
-==691952== HEAP SUMMARY:
-==691952==     in use at exit: 0 bytes in 0 blocks
-==691952==   total heap usage: 9 allocs, 9 frees, 6,416,980 bytes allocated
-==691952== 
-==691952== All heap blocks were freed -- no leaks are possible
-==691952== 
-==691952== For lists of detected and suppressed errors, rerun with: -s
-==691952== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==2472101== Memcheck, a memory error detector
+==2472101== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==2472101== Using Valgrind-3.21.0 and LibVEX; rerun with -h for copyright info
+==2472101== Command: ./tema3_neopt ../input/input_valgrind
+==2472101== 
+==2472101== 
+==2472101== HEAP SUMMARY:
+==2472101==     in use at exit: 0 bytes in 0 blocks
+==2472101==   total heap usage: 9 allocs, 9 frees, 6,416,980 bytes allocated
+==2472101== 
+==2472101== All heap blocks were freed -- no leaks are possible
+==2472101== 
+==2472101== For lists of detected and suppressed errors, rerun with: -s
+==2472101== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
